@@ -96,9 +96,6 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
-        .sheet(isPresented: $showingSBSignInSheet) {
-            ScoutbookLoginView()
-        }
         .sheet(isPresented: $showingTTESignInSheet) {
             TTELoginView(apiManager: objectCache.apiManager)
         }
