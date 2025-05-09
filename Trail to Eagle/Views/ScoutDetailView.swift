@@ -91,183 +91,240 @@ struct ScoutDetailView: View {
         ZStack {
             Color("BackgroundColor")
                 .ignoresSafeArea()
+
             if scout.currentRank.name == "Eagle" {
-                VStack {
-                    HStack {
-                        Spacer()
-                        EagleScoutDetailViewBanner()
-                            .rotationEffect(.degrees(-45))
-                            .position(x: UIScreen.main.bounds.width - 45, y: 40)
-                    }
-                    Spacer()
-                }
+                eagleBanner
             }
+
             ScrollView {
                 VStack {
-                    HStack {
-                        Spacer()
-                        Button(isEditing ? "Save" : "Edit") {
-                            if isEditing {
-                                updateScoutBirthday()
-                            }
-                            isEditing.toggle()
-                        }
-                        .font(.headline)
-                        .padding(.trailing)
-                    }
-                    ZStack {
-                        if let imageData = scout.profilePicture, let uiImage = UIImage(data: imageData) {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 122, height: 122)
-                                .clipShape(Circle())
-                                .padding()
-                        } else {
-                            if scout.currentRank.level == 3 { // Second Class
-                                Image("SecondClassInsignia")
-                                    .resizable()
-                                    .renderingMode(.template)
-                                    .aspectRatio(contentMode: .fit)
-                                    .foregroundColor(Color("AccentColor"))
-                                    .frame(width: 85)
-                                    .padding()
-                                    .onAppear {
-                                        if let scoutbookID = scout.scoutbookID {
-                                            objectCache.apiManager.getScoutProfileImage(scoutbookID: scoutbookID) { data in
-                                                if let data = data {
-                                                    scout.profilePicture = data
-                                                }
-                                            }
-                                        }
-                                    }
-                            } else if scout.currentRank.level == 0 { // No Rank
-                                Image(systemName: "person.crop.circle")
-                                    .resizable()
-                                    .renderingMode(.template)
-                                    .aspectRatio(contentMode: .fit)
-                                    .foregroundColor(Color("AccentColor"))
-                                    .frame(width: 122, height: 122)
-                                    .padding()
-                                    .onAppear {
-                                        if let scoutbookID = scout.scoutbookID {
-                                            objectCache.apiManager.getScoutProfileImage(scoutbookID: scoutbookID) { data in
-                                                if let data = data {
-                                                    scout.profilePicture = data
-                                                }
-                                            }
-                                        }
-                                    }
-                            } else {
-                                Image("\(scout.currentRank.name.replacingOccurrences(of: " ", with: "").trimmingCharacters(in: .whitespacesAndNewlines))Insignia")
-                                    .resizable()
-                                    .renderingMode(.template)
-                                    .aspectRatio(contentMode: .fit)
-                                    .foregroundColor(Color("AccentColor"))
-                                    .frame(width: 100)
-                                    .padding()
-                                    .onAppear {
-                                        if let scoutbookID = scout.scoutbookID {
-                                            objectCache.apiManager.getScoutProfileImage(scoutbookID: scoutbookID) { data in
-                                                if let data = data {
-                                                    scout.profilePicture = data
-                                                }
-                                            }
-                                        }
-                                    }
-                            }
-                        }
-                        if scout.currentRank.name != "Eagle" {
-                            // Progress bar surrounding the profile image
-                            Circle()
-                                .stroke(lineWidth: 8)
-                                .foregroundColor(Color("AccentColor").opacity(0.2))
-                                .frame(width: 130, height: 130)
-                            
-                            // Thicker progress bar around the profile picture
-                            Circle()
-                                .trim(from: 0, to: CGFloat(scout.progress))
-                                .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                                .foregroundColor(Color("AccentColor"))
-                                .rotationEffect(.degrees(-90)) // To start the progress from the top
-                                .frame(width: 130, height: 130)
-                        }
-                    }
-                    
-                    Text("\(scout.firstName) \(scout.lastName)")
-                        .font(.largeTitle)
-                        .bold()
-                    Text("\(scout.unitName ?? "No Unit") - \(scout.currentRank.name)")
-                        .font(.title3)
-                        .foregroundColor(.gray)
-                    
-                    if scout.currentRank.name == "Eagle" {
-                        Text("Earned Eagle: \(formattedDate(for: scout.currentRank.date))")
-                            .font(.title2)
-                            .foregroundColor(.blue)
-                    } else {
-                        if showDetails {
-                            Text("\(scout.riskValue.details)")
-                                .foregroundColor(Color("AccentColor"))
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color("ListBackgroundColor"))
-                                .cornerRadius(10)
-                                .padding(.horizontal)
-                                .onTapGesture {
-                                    showDetails.toggle()
-                                }
-                                .animation(.easeInOut, value: showDetails)
-                        } else {
-                            Text("\(scout.riskValue.label)")
-                                .font(.title2)
-                                .foregroundColor(Color("ScoutingAmericaRedColor"))
-                                .onTapGesture { showDetails.toggle() }
-                                .animation(.easeInOut, value: showDetails)
-                        }
-                    }
-                    
-                    if isEditing {
-                        DatePicker("Birthday", selection: $selectedBirthday, displayedComponents: .date)
-                            .datePickerStyle(.compact)
-                            .padding()
-                    } else {
-                        Chart {
-                            ForEach(scout.meritBadgeChartData) { data in
-                                BarMark(
-                                    x: .value("Date", data.date),
-                                    y: .value("Merit Badges", data.meritBadgesEarned)
-                                )
-                                .foregroundStyle(.blue)
-                                LineMark(
-                                    x: .value("Date", data.date),
-                                    y: .value("Cumulative Rank Advancements", data.cumulativeRankAdvancements)
-                                )
-                                .foregroundStyle(Color("ScoutingAmericaRedColor"))
-                                .lineStyle(StrokeStyle(lineWidth: 2))
-                                .interpolationMethod(.stepStart)
-                            }
-                        }
-                        .frame(height: 300)
-                        .padding()
-                        .chartXAxis {
-                            AxisMarks(values: .stride(by: .month, count: scout.meritBadgeChartData.count > 6 ? 6 : 3)) { _ in
-                                AxisGridLine()
-                                AxisValueLabel(format: .dateTime.year().month(.abbreviated))
-                            }
-                        }
-                        .chartYAxis {
-                            AxisMarks(position: .leading)
-                        }
-                        Spacer()
-                    }
+                    headerButtons
+                    profileSection
+                    nameAndRankSection
+                    rankDetailSection
+                    birthdayOrChart
                 }
+                .padding()
             }
             .environment(\EnvironmentValues.refresh as! WritableKeyPath<EnvironmentValues, RefreshAction?>, nil)
-            .padding()
         }
     }
     
+    private var eagleBanner: some View {
+        VStack {
+            HStack {
+                Spacer()
+                EagleScoutDetailViewBanner()
+                    .rotationEffect(.degrees(-45))
+                    .position(x: UIScreen.main.bounds.width - 45, y: 40)
+            }
+            Spacer()
+        }
+    }
+    
+    private var headerButtons: some View {
+        HStack {
+            Spacer()
+            Button(isEditing ? "Save" : "Edit") {
+                if isEditing {
+                    updateScoutBirthday()
+                }
+                isEditing.toggle()
+            }
+            .font(.headline)
+            .padding(.trailing)
+        }
+    }
+    
+    private var profileSection: some View {
+        ZStack {
+            if let imageData = scout.profilePicture, let uiImage = UIImage(data: imageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 122, height: 122)
+                    .clipShape(Circle())
+                    .padding()
+            } else {
+                profilePlaceholder
+            }
+
+            if scout.currentRank.name != "Eagle" {
+                Circle()
+                    .stroke(lineWidth: 8)
+                    .foregroundColor(Color("AccentColor").opacity(0.2))
+                    .frame(width: 130, height: 130)
+
+                Circle()
+                    .trim(from: 0, to: CGFloat(scout.progress))
+                    .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .foregroundColor(Color("AccentColor"))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 130, height: 130)
+            }
+        }
+    }
+    
+    private var profilePlaceholder: some View {
+        Group {
+            if scout.currentRank.level == 3 {
+                Image("SecondClassInsignia")
+                    .resizable()
+                    .renderingMode(.template)
+                    .aspectRatio(contentMode: .fit)
+                    .foregroundColor(Color("AccentColor"))
+                    .frame(width: 85)
+                    .padding()
+                    .onAppear(perform: fetchProfileImage)
+            } else if scout.currentRank.level == 0 {
+                Image(systemName: "person.crop.circle")
+                    .resizable()
+                    .renderingMode(.template)
+                    .aspectRatio(contentMode: .fit)
+                    .foregroundColor(Color("AccentColor"))
+                    .frame(width: 122, height: 122)
+                    .padding()
+                    .onAppear(perform: fetchProfileImage)
+            } else {
+                Image("\(scout.currentRank.name.replacingOccurrences(of: " ", with: "").trimmingCharacters(in: .whitespacesAndNewlines))Insignia")
+                    .resizable()
+                    .renderingMode(.template)
+                    .aspectRatio(contentMode: .fit)
+                    .foregroundColor(Color("AccentColor"))
+                    .frame(width: 100)
+                    .padding()
+                    .onAppear(perform: fetchProfileImage)
+            }
+        }
+    }
+    
+    private var nameAndRankSection: some View {
+        VStack {
+            Text("\(scout.firstName) \(scout.lastName)")
+                .font(.largeTitle)
+                .bold()
+            Text("\(scout.unitName ?? "No Unit") - \(scout.currentRank.name)")
+                .font(.title3)
+                .foregroundColor(.gray)
+        }
+    }
+    
+    private var rankDetailSection: some View {
+        Group {
+            if scout.currentRank.name == "Eagle" {
+                Text("Earned Eagle: \(formattedDate(for: scout.currentRank.date))")
+                    .font(.title2)
+                    .foregroundColor(.blue)
+            } else {
+                if showDetails {
+                    Text("\(scout.riskValue.details)")
+                        .foregroundColor(Color("AccentColor"))
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color("ListBackgroundColor"))
+                        .cornerRadius(10)
+                        .padding(.horizontal)
+                        .onTapGesture {
+                            showDetails.toggle()
+                        }
+                        .animation(.easeInOut, value: showDetails)
+                } else {
+                    Text("\(scout.riskValue.label)")
+                        .font(.title2)
+                        .foregroundColor(Color("ScoutingAmericaRedColor"))
+                        .onTapGesture { showDetails.toggle() }
+                        .animation(.easeInOut, value: showDetails)
+                }
+            }
+        }
+    }
+    
+    private var birthdayOrChart: some View {
+        Group {
+            if isEditing {
+                DatePicker("Birthday", selection: $selectedBirthday, displayedComponents: .date)
+                    .datePickerStyle(.compact)
+                    .padding()
+            } else {
+                meritBadgeChart
+            }
+        }
+    }
+    
+    private var meritBadgeChart: some View {
+        Chart {
+            ForEach(scout.meritBadgeChartData) { data in
+                BarMark(
+                    x: .value("Period", data.date, unit: .month),
+                    y: .value("Merit Badges", data.meritBadgesEarned)
+                )
+                .foregroundStyle(.blue)
+                .annotation(position: .top) {
+                    if data.meritBadgesEarned > 0 {
+                        Text("\(data.meritBadgesEarned)")
+                            .font(.caption2)
+                    }
+                }
+            }
+
+            ForEach(scout.meritBadgeChartData) { data in
+                LineMark(
+                    x: .value("Period", data.date, unit: .month),
+                    y: .value("Ranks", data.cumulativeRankAdvancements)
+                )
+                .foregroundStyle(Color("ScoutingAmericaRedColor"))
+                .lineStyle(StrokeStyle(lineWidth: 3))
+                .symbol {
+                    Circle()
+                        .fill(Color("ScoutingAmericaRedColor"))
+                        .frame(width: 8)
+                }
+                .annotation(position: .top) {
+                    if data.cumulativeRankAdvancements > 0 {
+                        Text("\(data.cumulativeRankAdvancements)")
+                            .font(.caption2)
+                            .foregroundColor(Color("ScoutingAmericaRedColor"))
+                    }
+                }
+            }
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading)
+        }
+        .chartXAxis {
+            let chartData = scout.meritBadgeChartData
+            let maxLabels = 6
+            let strideAmount = max(1, chartData.count / maxLabels)
+            let xAxisDates = stride(from: 0, to: chartData.count, by: strideAmount).map { chartData[$0].date }
+            
+            AxisMarks(position: .bottom, values: xAxisDates) { value in
+                AxisGridLine()
+                AxisTick()
+                if let date = value.as(Date.self) {
+                    AxisValueLabel {
+                        VStack(spacing: 2) {
+                            Text(date, format: .dateTime.month(.abbreviated))
+                            Text(date, format: .dateTime.year(.twoDigits))
+                                .font(.caption)
+                        }
+                    }
+                }
+            }
+        }
+        .frame(height: 300)
+        .padding()
+    }
+    
+    private func fetchProfileImage() {
+        if let scoutbookID = scout.scoutbookID {
+            objectCache.apiManager.getScoutProfileImage(scoutbookID: scoutbookID) { data in
+                if let data = data {
+                    scout.profilePicture = data
+                }
+            }
+        }
+    }
+
     private func updateScoutBirthday() {
         if selectedBirthday != scout.birthday {
             let calendar = Calendar(identifier: .gregorian)
