@@ -4,6 +4,50 @@ This document provides detailed technical documentation for each endpoint in the
 
 ---
 
+## Table of Contents
+
+* [Authentication](#authentication)
+
+  * [`POST /login`](#post-login)
+  * [`POST /refresh`](#post-refresh)
+* [User Utilities](#user-utilities)
+
+  * [`GET /whoami`](#get-whoami)
+* [Session & Scraping](#session--scraping)
+
+  * [`POST /start-scrape`](#post-start-scrape)
+* [Device Management](#device-management)
+
+  * [`POST /update-token`](#post-update-token)
+* [Media Endpoints](#media-endpoints)
+
+  * [`GET /scout-image`](#get-scout-imagescoutbook_idid)
+  * [`GET /mb-image`](#get-mb-imagescoutbook_idid)
+* [Data Retrieval Endpoints](#data-retrieval-endpoints)
+
+  * [`GET /hidden-scout-list`](#get-hidden-scout-list)
+  * [`GET /pinned-scouts-list`](#get-pinned-scouts-list)
+  * [`GET /units`](#get-units)
+  * [`GET /merit-badges`](#get-merit-badges)
+  * [`GET /scout-list`](#get-scout-list)
+  * [`GET /scout`](#get-scoutscout_idid)
+* [Data Modification Endpoints](#data-modification-endpoints)
+
+  * [`POST /update-birthday`](#post-update-birthday)
+  * [`POST /update-hidden`](#post-update-hidden)
+* [Version](#version)
+* [Authentication Notes](#authentication-notes)
+
+---
+
+## Authentication Notes
+
+* Access Token: Used for protected endpoints.
+* Refresh Token: Used only with `/refresh`.
+* Both tokens are required to be managed securely by the client.
+
+---
+
 ## Authentication
 
 ### `POST /login`
@@ -89,7 +133,7 @@ This document provides detailed technical documentation for each endpoint in the
 
 ```json
 {
-  "message": "Scraping started"
+  "message": "Scraping started."
 }
 ```
 
@@ -120,7 +164,7 @@ This document provides detailed technical documentation for each endpoint in the
 
 ```json
 {
-  "message": "Device token updated successfully"
+  "message": "Device token updated successfully."
 }
 ```
 
@@ -130,9 +174,20 @@ This document provides detailed technical documentation for each endpoint in the
 
 ### `GET /scout-image?scoutbook_id=ID`
 
+**Description**: Retrieves the image file for a specific scout.
+
+**Authentication**: JWT access token required.
+
+**Response**: Image file.
+
+**Errors**:
+
+* `400`: Missing ID.
+* `404`: Image not found.
+
 ### `GET /mb-image?scoutbook_id=ID`
 
-**Description**: Retrieves image files for scouts or merit badges.
+**Description**: Retrieves the image file for a specific merit badge.
 
 **Authentication**: JWT access token required.
 
@@ -148,6 +203,23 @@ This document provides detailed technical documentation for each endpoint in the
 ## Data Retrieval Endpoints
 
 ### `GET /hidden-scout-list`
+
+**Description**: Retrieves a list of scouts marked as hidden.
+
+**Response**:
+
+```json
+[
+  {
+    "id": int,
+    "scoutbook_id": "string",
+    "first_name": "string",
+    "last_name": "string",
+    "unit_name": "string",
+    "hidden": true
+  }, ...
+]
+```
 
 ### `GET /pinned-scouts-list`
 
@@ -167,6 +239,20 @@ This document provides detailed technical documentation for each endpoint in the
 ```
 
 ### `GET /units`
+
+**Description**: Retrieves a list of all available scout units.
+
+**Response**:
+
+```json
+[
+  {
+    "id": int,
+    "name": "string",
+    "unit_type": "string"
+  }, ...
+]
+```
 
 ### `GET /merit-badges`
 
