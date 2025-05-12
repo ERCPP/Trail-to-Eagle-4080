@@ -1,18 +1,16 @@
 # API Documentation
 
-## Overview
-
-This API supports user authentication, session management, and data access for a Scout management platform. The system leverages JWT-based authentication, provides protected endpoints for various data entities, and performs background scraping of external data sources. All sensitive endpoints require a valid JWT token.
+This document provides detailed technical documentation for each endpoint in the API, including input parameters, authentication requirements, and returned values.
 
 ---
 
 ## Authentication
 
-### POST `/login`
+### `POST /login`
 
-**Description:** Authenticates user and returns JWT access and refresh tokens. Stores or validates device information.
+**Description**: Authenticates a user and returns JWT access and refresh tokens.
 
-**Request Body:**
+**Request Body**:
 
 ```json
 {
@@ -22,46 +20,92 @@ This API supports user authentication, session management, and data access for a
 }
 ```
 
-**Response:**
+**Response**:
 
-* 200 OK: `{ "access_token": "...", "refresh_token": "..." }`
-* 400 Bad Request / 401 Unauthorized / 500 Internal Error
+```json
+{
+  "access_token": "JWT",
+  "refresh_token": "JWT"
+}
+```
 
----
+**Errors**:
 
-### POST `/refresh`
+* `400`: Missing parameters.
+* `401`: Invalid credentials.
+* `500`: Device info storage failure.
 
-**Description:** Issues a new access token using a valid refresh token.
+### `POST /refresh`
 
-**Headers:** `Authorization: Bearer <refresh_token>`
+**Description**: Refreshes the JWT access token using the refresh token.
 
-**Response:**
+**Authentication**: Requires valid JWT refresh token.
 
-* 200 OK: `{ "access_token": "..." }`
+**Response**:
 
----
-
-## User Info
-
-### GET `/whoami`
-
-**Description:** Returns the username of the authenticated user.
-
-**Headers:** `Authorization: Bearer <access_token>`
-
-**Response:**
-
-* 200 OK: `{ "logged_in_as": "username" }`
+```json
+{
+  "access_token": "JWT"
+}
+```
 
 ---
 
-## Device Token Management
+## User Utilities
 
-### POST `/update-token`
+### `GET /whoami`
 
-**Description:** Updates the notification token associated with a device.
+**Description**: Returns the username of the currently authenticated user.
 
-**Request Body:**
+**Authentication**: JWT access token required.
+
+**Response**:
+
+```json
+{
+  "logged_in_as": "username"
+}
+```
+
+---
+
+## Session & Scraping
+
+### `POST /start-scrape`
+
+**Description**: Triggers a background scraping task using user session cookies.
+
+**Request Body**:
+
+```json
+{
+  "cookies": { ... }
+}
+```
+
+**Authentication**: JWT access token required.
+
+**Response**:
+
+```json
+{
+  "message": "Scraping started"
+}
+```
+
+**Errors**:
+
+* `400`: Missing cookies.
+
+---
+
+## Device Management
+
+### `POST /update-token`
+
+**Description**: Updates the device token for notifications.
+
+**Request Body**:
 
 ```json
 {
@@ -70,115 +114,174 @@ This API supports user authentication, session management, and data access for a
 }
 ```
 
-**Response:**
+**Authentication**: JWT access token required.
 
-* 200 OK / 400 Bad Request / 500 Internal Error
-
----
-
-## Scraping
-
-### POST `/start-scrape`
-
-**Description:** Initiates a background scraping task using provided session cookies.
-
-**Request Body:**
+**Response**:
 
 ```json
 {
-  "cookies": "string"
+  "message": "Device token updated successfully"
 }
 ```
 
-**Response:**
-
-* 200 OK: `{ "message": "Scraping started" }`
-
 ---
 
-## Static Image Access
+## Media Endpoints
 
-### GET `/scout-image?scoutbook_id=<id>`
+### `GET /scout-image?scoutbook_id=ID`
 
-### GET `/mb-image?scoutbook_id=<id>`
+### `GET /mb-image?scoutbook_id=ID`
 
-**Description:** Returns the image of a scout or merit badge by Scoutbook ID.
+**Description**: Retrieves image files for scouts or merit badges.
 
-**Response:**
+**Authentication**: JWT access token required.
 
-* 200 OK: Image file
-* 404 Not Found
+**Response**: Image file.
+
+**Errors**:
+
+* `400`: Missing ID.
+* `404`: Image not found.
 
 ---
 
 ## Data Retrieval Endpoints
 
-### GET `/hidden-scout-list`
+### `GET /hidden-scout-list`
 
-**Description:** Returns a list of hidden scouts for the user.
+### `GET /pinned-scouts-list`
 
-### GET `/pinned-scouts-list`
+**Response**:
 
-**Description:** Returns a list of pinned scouts.
+```json
+[
+  {
+    "id": int,
+    "scoutbook_id": "string",
+    "first_name": "string",
+    "last_name": "string",
+    "unit_name": "string",
+    "current_rank": "string"
+  }, ...
+]
+```
 
-### GET `/units`
+### `GET /units`
 
-**Description:** Returns a list of units.
+### `GET /merit-badges`
 
-### GET `/merit-badges`
+**Response**:
 
-**Description:** Returns all merit badges.
+```json
+[
+  {
+    "id": int,
+    "scoutbook_id": "string",
+    "name": "string",
+    "unit_type_id": int,
+    "number": string,
+    "gender": string,
+    "scoutmaster_id": int,
+    "active": bool,
+    "eagle_required": bool
+  }, ...
+]
+```
 
-### GET `/scout-list`
+### `GET /scout-list`
 
-**Description:** Returns a preview of scouts with merit badges and rank advancements.
+**Response**:
 
-### GET `/scout?scout_id=<id>`
+```json
+[
+  {
+    "id": int,
+    "scoutbook_id": "string",
+    "first_name": "string",
+    "last_name": "string",
+    "unit_name": "string",
+    "email": "string",
+    "phone": "string",
+    "birthday": "YYYY-MM-DD",
+    "merit_badges": [ ... ],
+    "rank_advancement_events": [ ... ]
+  }, ...
+]
+```
 
-**Description:** Returns detailed information for a specific scout.
+### `GET /scout?scout_id=ID`
 
-**Response Format:**
-Each endpoint returns a list or single JSON object containing the relevant structured data.
+**Response**:
+
+```json
+[
+  {
+    "id": int,
+    "scoutbook_id": "string",
+    "first_name": "string",
+    "last_name": "string",
+    "unit_name": "string",
+    "email": "string",
+    "phone": "string",
+    "birthday": "YYYY-MM-DD",
+    "merit_badges": [ ... ],
+    "rank_advancement_events": [ ... ]
+  }
+]
+```
 
 ---
 
-## Data Update
+## Data Modification Endpoints
 
-### POST `/update-birthday`
+### `POST /update-birthday`
 
-**Description:** Updates a scout's birthday.
-
-**Request Body:**
+**Request Body**:
 
 ```json
 {
-  "scout_id": "integer",
+  "scout_id": int,
   "birthday": "YYYY-MM-DD"
 }
 ```
 
-**Response:**
-
-* 200 OK / 400 Bad Request / 500 Internal Error
-
----
-
-## Version Info
-
-### GET `/version`
-
-**Description:** Returns current API version.
-
-**Response:**
+**Response**:
 
 ```json
-{ "version": "0.1.0" }
+{
+  "message": "Birthday updated successfully."
+}
+```
+
+### `POST /update-hidden`
+
+**Request Body**:
+
+```json
+{
+  "scout_id": int,
+  "hidden": bool
+}
+```
+
+**Response**:
+
+```json
+{
+  "message": "Hidden status updated successfully."
+}
 ```
 
 ---
 
-## Security
+## Version
 
-* JWT tokens are required for all protected endpoints.
-* HTTPS enforced via Flask-Talisman.
-* Device verification enhances authentication security.
+### `GET /version`
+
+**Response**:
+
+```json
+{
+  "version": "0.1.0"
+}
+```
