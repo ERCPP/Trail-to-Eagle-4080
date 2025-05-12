@@ -212,6 +212,28 @@ class APIManager: ObservableObject {
             }
         }
     }
+    
+    public func getHiddenScouts(completion: @escaping ([Scout]?) -> Void) {
+        let hiddenScoutsURL = URL(string: "\(baseURL)/hidden-scout-list")!
+        let accessToken = KeychainManager.retrieveAccessToken()
+        
+        sendRequest(to: hiddenScoutsURL, method: "GET", body: nil, authorizationToken: accessToken) { result in
+            switch result {
+            case .success(let data):
+                print("Hidden scouts retrieved")
+                do {
+                    let scouts = try JSONDecoder().decode([Scout].self, from: data)
+                    completion(scouts)
+                } catch {
+                    print("Failed to decode rseponse: \(error)")
+                    completion(nil)
+                }
+            case .failure(let error):
+                ErrorHandler.apiError(errorIn: error, location: "getHiddenScouts")
+            }
+        }
+        
+    }
 
     // Setter Functions
     // Update the Scout's birthday on the Backend
