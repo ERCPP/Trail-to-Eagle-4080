@@ -295,6 +295,12 @@ class ObjectCache: ObservableObject {
                         self.scouts.append(newScout)
                     }
                 }
+                
+                //check if scout hidden: check if any existing scout not in newScouts
+                self.scouts = self.scouts.filter { scout in
+                    newScouts.contains { $0.id == scout.id }
+                }
+
             }
         }
     }

@@ -236,6 +236,27 @@ class APIManager: ObservableObject {
         }
     }
     
+    public func setHiddenStatus(for scoutID: Int, to newStatus: Bool) {
+        let hiddenStatusUrl = URL(string: "\(baseURL)/update-hidden")!
+        let accessToken = KeychainManager.retrieveAccessToken()
+        
+        print("SCOUT ID: \(scoutID)")
+        
+        let body: [String: Any] = [
+            "scout_id": scoutID,
+            "hidden": newStatus
+        ]
+        
+        sendRequest(to: hiddenStatusUrl, method: "POST", body: body, authorizationToken: accessToken) { result in
+            switch result {
+            case .success(_):
+                print("Set hidden status successfully: \(newStatus)")
+            case .failure(let error):
+                ErrorHandler.apiError(errorIn: error, location: "setHiddenStatus")
+            }
+        }
+    }
+    
     // Helper Functions
     // Handle API calls to endpoints
     /*private func sendRequest(to url: URL, method: String, body: [String: Any]?, authorizationToken: String? = nil, completion: @escaping (Result<Data, APIError>) -> Void) {

@@ -58,6 +58,8 @@ struct ScoutDetailView: View {
     @State private var isEditing = false
     @State private var showDetails = false
     @State private var selectedBirthday: Date
+    @Environment(\.dismiss) private var dismiss
+
     
     init(objectCache: ObjectCache, scout: Scout) {
         self.objectCache = objectCache
@@ -103,6 +105,10 @@ struct ScoutDetailView: View {
                     nameAndRankSection
                     rankDetailSection
                     birthdayOrChart
+                    
+                    if (!isEditing) {
+                        hideScoutButton
+                    }
                 }
                 .padding()
             }
@@ -352,6 +358,24 @@ struct ScoutDetailView: View {
         formatter.dateStyle = .long
         formatter.timeStyle = .none
         return formatter.string(from: date)
+    }
+    
+    private var hideScoutButton: some View {
+        Button(action: {
+            //TODO make API call to hide scout
+            objectCache.apiManager.setHiddenStatus(for: scout.id, to: true)
+            dismiss()
+        }) {
+            Label("Hide Scout", systemImage: "minus.circle")
+                .font(.headline)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color("AccentColor"))
+                .foregroundColor(.white)
+                .cornerRadius(10)
+                .labelStyle(.titleAndIcon)  // Ensures text and icon are aligned
+        }
+        .padding(.bottom, 20)
     }
 }
 

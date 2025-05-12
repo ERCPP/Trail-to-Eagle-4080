@@ -32,6 +32,9 @@ struct HomeScoutsView: View {
             .scrollContentBackground(.hidden)
             .sheet(item: $selectedScout) { scout in
                 ScoutDetailView(objectCache: objectCache, scout: scout)
+                    .onDisappear() {
+                        objectCache.refreshScouts()
+                    }
             }
             .refreshable { objectCache.refreshScouts() }
         }
