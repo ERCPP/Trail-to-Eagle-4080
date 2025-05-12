@@ -215,8 +215,7 @@ This document provides detailed technical documentation for each endpoint in the
     "scoutbook_id": "string",
     "first_name": "string",
     "last_name": "string",
-    "unit_name": "string",
-    "hidden": true
+    "unit_name": "string"
   }, ...
 ]
 ```
