@@ -273,23 +273,27 @@ struct ScoutDetailView: View {
                 }
             }
 
-            ForEach(scout.meritBadgeChartData) { data in
+            ForEach(Array(scout.meritBadgeChartData.enumerated()), id: \.element.id) { index, data in
                 LineMark(
                     x: .value("Period", data.date, unit: .month),
                     y: .value("Ranks", data.cumulativeRankAdvancements)
                 )
                 .foregroundStyle(Color("ScoutingAmericaRedColor"))
                 .lineStyle(StrokeStyle(lineWidth: 3))
-                .symbol {
-                    Circle()
-                        .fill(Color("ScoutingAmericaRedColor"))
-                        .frame(width: 8)
-                }
-                .annotation(position: .top) {
-                    if data.cumulativeRankAdvancements > 0 {
+                
+                if showRankPoint(at: index, in: scout.meritBadgeChartData) {
+                    PointMark(
+                        x: .value("Period", data.date, unit: .month),
+                        y: .value("Ranks", data.cumulativeRankAdvancements)
+                    )
+                    .foregroundStyle(Color("ScoutingAmericaRedColor"))
+                    .symbolSize(60)
+                    
+                    .annotation(position: .top) {
                         Text("\(data.cumulativeRankAdvancements)")
                             .font(.caption2)
                             .foregroundColor(Color("ScoutingAmericaRedColor"))
+                            .fixedSize()
                     }
                 }
             }
@@ -319,6 +323,17 @@ struct ScoutDetailView: View {
         }
         .frame(height: 300)
         .padding()
+    }
+    
+    private func showRankPoint(at index: Int, in data: [MeritBadgeProgress]) -> Bool {
+        guard !data.isEmpty else { return false }
+        
+
+        if index == 0 {
+            return data[index].cumulativeRankAdvancements > 0
+        }
+        
+        return data[index].cumulativeRankAdvancements > data[index-1].cumulativeRankAdvancements
     }
     
     private func fetchProfileImage() {
