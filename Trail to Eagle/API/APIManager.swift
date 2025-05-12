@@ -35,7 +35,7 @@ class APIManager: ObservableObject {
     }
     
     //Primary Functions
-    public func login(username: String, password: String, completion: @escaping (Bool) -> Void) {
+    public func login(username: String, password: String, completion: @escaping (Result<Void, APIError>) -> Void) {
         let loginURL = URL(string: "\(baseURL)/login")!
         let body: [String: Any] = [
             "username": username,
@@ -52,13 +52,15 @@ class APIManager: ObservableObject {
                             self.tokensDidChange.send()
                         }
                         NotificationManager.registerForRemoteNotificationsIfAccepted()
+                        completion(.success(()))
                     } catch {
                         ErrorHandler.apiError(errorIn: APIError.decodeFailed, location: "login")
+                        completion(.failure(.decodeFailed))
                     }
                 case .failure(let error):
-                ErrorHandler.apiError(errorIn: error, location: "login")
+                    ErrorHandler.apiError(errorIn: error, location: "login")
+                    completion(.failure(error))
             }
-            completion(true)
         }
     }
     
