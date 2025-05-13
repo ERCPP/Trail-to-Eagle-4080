@@ -83,6 +83,13 @@ class Scout: Decodable, Identifiable, ObservableObject {
         return (rankName, earnedDate, rankLevel, daysSinceEarned)
     }
     
+    var filteredRankAdvancementsEvents: [RankAdvancementEvent]? {
+        return rankAdvancementEvents?.filter { event in
+            let lowercasedName = event.name.lowercased()
+            return !lowercasedName.contains("arrow of light") && !lowercasedName.contains("aol")
+        }
+    }
+    
     var progress: Double {
         switch currentRank.level {
         case 0: return 0.0 // None/AOL
