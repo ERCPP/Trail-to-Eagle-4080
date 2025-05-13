@@ -14,6 +14,11 @@ struct TTELoginView: View {
     @State var isLoading = false
     let animation = Animation.linear.repeatForever(autoreverses: false)
     
+    @State private var errorMessage: String?
+    @Environment(\.dismiss) var dismiss
+    
+    var onSuccess: (() -> Void)?
+
     var body: some View {
         VStack {
             if #available(iOS 16.0, *) {
@@ -38,6 +43,11 @@ struct TTELoginView: View {
                 .fontWeight(.regular)
                 .multilineTextAlignment(.center)
                 .padding(.bottom)
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .padding(.bottom, 5)
+            }
             TextField("Username", text: $username)
                 .autocapitalization(.none)
                 .padding()
@@ -53,13 +63,7 @@ struct TTELoginView: View {
                 .padding(.horizontal)
                 .textContentType(.password)
             // For Eventual 2FA .textContentType = .oneTimeCode
-            Button(action: {
-                isLoading = true
-                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                apiManager.login(username: username, password: password) { result in
-                    isLoading = false
-                }
-            }) {
+            Button(action: login) {
                 Text("Login")
                     .padding()
                     .frame(maxWidth: .infinity)
@@ -67,9 +71,30 @@ struct TTELoginView: View {
                     .cornerRadius(12)
                     .padding(.horizontal)
             }
-            .disabled(username.isEmpty || password.isEmpty)
+            .disabled(username.isEmpty || password.isEmpty || isLoading)
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .padding()
+    }
+    
+    private func login() {
+        isLoading = true
+        errorMessage = nil
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        
+        apiManager.login(username: username, password: password) { result in
+            isLoading = false
+            switch result {
+            case .success:
+                onSuccess?()
+                dismiss()
+            case .failure(let error):
+                if case .unauthorized = error {
+                    errorMessage = "Incorrect Username or Password"
+                } else {
+                    errorMessage = error.localizedDescription
+                }
+            }
+        }
     }
 }

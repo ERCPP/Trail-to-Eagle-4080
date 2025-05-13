@@ -58,6 +58,8 @@ struct ScoutDetailView: View {
     @State private var isEditing = false
     @State private var showDetails = false
     @State private var selectedBirthday: Date
+    @Environment(\.dismiss) private var dismiss
+
     
     init(objectCache: ObjectCache, scout: Scout) {
         self.objectCache = objectCache
@@ -103,6 +105,10 @@ struct ScoutDetailView: View {
                     nameAndRankSection
                     rankDetailSection
                     birthdayOrChart
+                    
+                    if (!isEditing) {
+                        hideScoutButton
+                    }
                 }
                 .padding()
             }
@@ -267,23 +273,27 @@ struct ScoutDetailView: View {
                 }
             }
 
-            ForEach(scout.meritBadgeChartData) { data in
+            ForEach(Array(scout.meritBadgeChartData.enumerated()), id: \.element.id) { index, data in
                 LineMark(
                     x: .value("Period", data.date, unit: .month),
                     y: .value("Ranks", data.cumulativeRankAdvancements)
                 )
                 .foregroundStyle(Color("ScoutingAmericaRedColor"))
                 .lineStyle(StrokeStyle(lineWidth: 3))
-                .symbol {
-                    Circle()
-                        .fill(Color("ScoutingAmericaRedColor"))
-                        .frame(width: 8)
-                }
-                .annotation(position: .top) {
-                    if data.cumulativeRankAdvancements > 0 {
+                
+                if showRankPoint(at: index, in: scout.meritBadgeChartData) {
+                    PointMark(
+                        x: .value("Period", data.date, unit: .month),
+                        y: .value("Ranks", data.cumulativeRankAdvancements)
+                    )
+                    .foregroundStyle(Color("ScoutingAmericaRedColor"))
+                    .symbolSize(60)
+                    
+                    .annotation(position: .top) {
                         Text("\(data.cumulativeRankAdvancements)")
                             .font(.caption2)
                             .foregroundColor(Color("ScoutingAmericaRedColor"))
+                            .fixedSize()
                     }
                 }
             }
@@ -313,6 +323,17 @@ struct ScoutDetailView: View {
         }
         .frame(height: 300)
         .padding()
+    }
+    
+    private func showRankPoint(at index: Int, in data: [MeritBadgeProgress]) -> Bool {
+        guard !data.isEmpty else { return false }
+        
+
+        if index == 0 {
+            return data[index].cumulativeRankAdvancements > 0
+        }
+        
+        return data[index].cumulativeRankAdvancements > data[index-1].cumulativeRankAdvancements
     }
     
     private func fetchProfileImage() {
@@ -352,6 +373,24 @@ struct ScoutDetailView: View {
         formatter.dateStyle = .long
         formatter.timeStyle = .none
         return formatter.string(from: date)
+    }
+    
+    private var hideScoutButton: some View {
+        Button(action: {
+            //TODO make API call to hide scout
+            objectCache.apiManager.setHiddenStatus(for: scout.id, to: true)
+            dismiss()
+        }) {
+            Label("Hide Scout", systemImage: "minus.circle")
+                .font(.headline)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color("AccentColor"))
+                .foregroundColor(.white)
+                .cornerRadius(10)
+                .labelStyle(.titleAndIcon)  // Ensures text and icon are aligned
+        }
+        .padding(.bottom, 20)
     }
 }
 

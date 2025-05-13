@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var showingSBSignInSheet = false
     @State private var showingTTESignInSheet = false
     @State private var hasLoaded = false
+    @State private var showingHiddenScoutList = false
 
     var body: some View {
         ZStack {
@@ -51,6 +52,22 @@ struct SettingsView: View {
                     }
                     .scrollContentBackground(.hidden)
                     .frame(maxHeight: 200) // Restricts list height to avoid excessive scrolling
+                }
+                
+                // **Hidden Scouts display button
+                if (isLoggedIn) {
+                    Button(action: {
+                        showingHiddenScoutList.toggle()
+                    }) {
+                        Text("Show Hidden Scouts")
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color("AccentColor"))
+                            .foregroundColor(Color.white)
+                            .cornerRadius(8)
+                    }
+                    .padding(.horizontal)
+                    .cornerRadius(8)
                 }
                 
                 // **Logout Button**
@@ -98,6 +115,9 @@ struct SettingsView: View {
         .navigationTitle("Settings")
         .sheet(isPresented: $showingTTESignInSheet) {
             TTELoginView(apiManager: objectCache.apiManager)
+        }
+        .sheet(isPresented: $showingHiddenScoutList) {
+            HiddenScoutsView(apiManager: objectCache.apiManager)
         }
     }
 }

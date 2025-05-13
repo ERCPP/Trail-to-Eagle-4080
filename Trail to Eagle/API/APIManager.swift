@@ -35,7 +35,7 @@ class APIManager: ObservableObject {
     }
     
     //Primary Functions
-    public func login(username: String, password: String, completion: @escaping (Bool) -> Void) {
+    public func login(username: String, password: String, completion: @escaping (Result<Void, APIError>) -> Void) {
         let loginURL = URL(string: "\(baseURL)/login")!
         let body: [String: Any] = [
             "username": username,
@@ -52,13 +52,15 @@ class APIManager: ObservableObject {
                             self.tokensDidChange.send()
                         }
                         NotificationManager.registerForRemoteNotificationsIfAccepted()
+                        completion(.success(()))
                     } catch {
                         ErrorHandler.apiError(errorIn: APIError.decodeFailed, location: "login")
+                        completion(.failure(.decodeFailed))
                     }
                 case .failure(let error):
-                ErrorHandler.apiError(errorIn: error, location: "login")
+                    ErrorHandler.apiError(errorIn: error, location: "login")
+                    completion(.failure(error))
             }
-            completion(true)
         }
     }
     
@@ -212,6 +214,28 @@ class APIManager: ObservableObject {
             }
         }
     }
+    
+    public func getHiddenScouts(completion: @escaping ([Scout]?) -> Void) {
+        let hiddenScoutsURL = URL(string: "\(baseURL)/hidden-scout-list")!
+        let accessToken = KeychainManager.retrieveAccessToken()
+        
+        sendRequest(to: hiddenScoutsURL, method: "GET", body: nil, authorizationToken: accessToken) { result in
+            switch result {
+            case .success(let data):
+                print("Hidden scouts retrieved")
+                do {
+                    let scouts = try JSONDecoder().decode([Scout].self, from: data)
+                    completion(scouts)
+                } catch {
+                    print("Failed to decode rseponse: \(error)")
+                    completion(nil)
+                }
+            case .failure(let error):
+                ErrorHandler.apiError(errorIn: error, location: "getHiddenScouts")
+            }
+        }
+        
+    }
 
     // Setter Functions
     // Update the Scout's birthday on the Backend
@@ -232,6 +256,27 @@ class APIManager: ObservableObject {
                     print("Set Birthday Successfully: \(epochSeconds)")
                 case .failure(let error):
                     ErrorHandler.apiError(errorIn: error, location: "setScoutBirthday")
+            }
+        }
+    }
+    
+    public func setHiddenStatus(for scoutID: Int, to newStatus: Bool) {
+        let hiddenStatusUrl = URL(string: "\(baseURL)/update-hidden")!
+        let accessToken = KeychainManager.retrieveAccessToken()
+        
+        print("SCOUT ID: \(scoutID)")
+        
+        let body: [String: Any] = [
+            "scout_id": scoutID,
+            "hidden": newStatus
+        ]
+        
+        sendRequest(to: hiddenStatusUrl, method: "POST", body: body, authorizationToken: accessToken) { result in
+            switch result {
+            case .success(_):
+                print("Set hidden status successfully: \(newStatus)")
+            case .failure(let error):
+                ErrorHandler.apiError(errorIn: error, location: "setHiddenStatus")
             }
         }
     }
