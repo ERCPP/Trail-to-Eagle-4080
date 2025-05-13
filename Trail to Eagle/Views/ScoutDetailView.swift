@@ -18,10 +18,11 @@ struct MeritBadgeProgress: Identifiable {
 
 extension Scout {
     var meritBadgeChartData: [MeritBadgeProgress] {
-        guard let meritBadges = meritBadges, let rankEvents = rankAdvancementEvents, !rankEvents.isEmpty else { return [] }
+        //Since filteredRankAdvancementEvents filters out aol award, created new var 'start' just for the meritBadge chart to know when the first awards are including the aol award
+        guard let meritBadges = meritBadges, let start = rankAdvancementEvents, let rankEvents = filteredRankAdvancementsEvents, !rankEvents.isEmpty else { return [] }
 
         let calendar = Calendar.current
-        let startDate = rankEvents.compactMap { $0.date }.min() ?? Date()
+        let startDate = start.compactMap { $0.date }.min() ?? Date()
         let endDate = Date()
         let totalMonths = calendar.dateComponents([.month], from: startDate, to: endDate).month ?? 12
         
